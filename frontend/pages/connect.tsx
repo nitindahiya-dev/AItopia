@@ -22,7 +22,7 @@ export default function Connect() {
     <div className="min-h-screen bg-custom-black">
       <main className="px-4 sm:px-0 sm:w-[90vw] md:w-[80vw] xl:w-[70vw] mx-auto py-20 space-y-16">
         <div className="text-center space-y-8">
-          <h1 className="uppercase font-loos-wide text-4xl md:text-6xl xl:text-7xl font-bold text-orange">
+          <h1 className="uppercase font-loos-wide md:mt-6 text-4xl md:text-6xl xl:text-7xl font-bold text-orange">
             Connect With Us
           </h1>
           <p

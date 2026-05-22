@@ -69,11 +69,11 @@ const LiveAnalytics = () => {
         <div className="grid lg:grid-cols-3 gap-8 mb-12">
           {/* Enhanced Data Flow Section */}
           <motion.div
-            className="lg:col-span-1 space-y-8"
+            className="lg:col-span-1"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <div className="backdrop-blur-xl h-96 bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden">
+            <div className="backdrop-blur-xl h-96 bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden flex flex-col">
               <div className="flex items-center gap-4 mb-6">
                 <div className="p-3 bg-orange/20 rounded-xl text-orange">
                   <Database className="w-6 h-6" />
@@ -81,20 +81,20 @@ const LiveAnalytics = () => {
                 <h3 className="font-loos-wide text-2xl">Data Flow</h3>
               </div>
 
-              <div className="h-40 relative">
+              <div className="relative flex-1 min-h-[220px]">
                 {/* Radial Gradient Background */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#FF6B3520_0%,transparent_60%)]" />
+                <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_center,#FF6B3525_0%,transparent_62%)]" />
 
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: -10, right: 0, bottom: 0, left: 0 }}>
                     {/* Animated Outer Ring */}
                     <Pie
                       data={[{ value: 100 }]}
                       dataKey="value"
                       cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={55}
+                      cy="48%"
+                      innerRadius={68}
+                      outerRadius={80}
                       fill="transparent"
                       stroke="#FFA50020"
                       strokeWidth={2}
@@ -104,10 +104,10 @@ const LiveAnalytics = () => {
                     <Pie
                       data={resourceData}
                       cx="50%"
-                      cy="50%"
-                      innerRadius={35}
-                      outerRadius={45}
-                      paddingAngle={2}
+                      cy="48%"
+                      innerRadius={54}
+                      outerRadius={68}
+                      paddingAngle={3}
                       dataKey="value"
                     >
                       {resourceData.map((entry, index) => (
@@ -123,26 +123,43 @@ const LiveAnalytics = () => {
                     {/* Floating Center */}
                     <text
                       x="50%"
-                      y="50%"
+                      y="46%"
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      className="font-loos-wide text-2xl"
+                      className="font-loos-wide text-3xl"
                       fill="#FFA500"
                     >
                       {resourceData.reduce((acc, curr) => acc + curr.value, 0)}%
                     </text>
+                    <text
+                      x="50%"
+                      y="56%"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="font-aeroport text-sm"
+                      fill="#FFFFFF80"
+                    >
+                      Total Load
+                    </text>
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
 
-                {/* Rotating Particles */}
-                <motion.div
-                  className="absolute inset-0"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                >
-                  <div className="absolute left-1/2 top-0 -ml-1 w-1 h-4 bg-orange/40 rounded-full" />
-                  <div className="absolute left-1/2 top-0 -ml-1 w-1 h-4 bg-orange/30 rounded-full transform rotate-45" />
-                </motion.div>
+              <div className="mt-[-4px] grid grid-cols-3 gap-2">
+                {resourceData.map((item) => (
+                  <div
+                    key={item.name}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center"
+                  >
+                    <div className="mb-1 flex items-center justify-center gap-2">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="font-aeroport text-xs text-white/70">{item.name}</span>
+                    </div>
+                    <p className="font-loos-wide text-sm" style={{ color: item.color }}>
+                      {item.value}%
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>

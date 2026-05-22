@@ -7,7 +7,7 @@ export default function About() {
       <main className="px-4 sm:px-0 sm:w-[90vw] md:w-[80vw] xl:w-[70vw] mx-auto py-20 space-y-16">
         {/* Hero Section */}
         <div className="text-center space-y-8">
-          <h1 className="uppercase font-loos-wide text-4xl md:text-6xl xl:text-7xl font-bold text-orange">
+          <h1 className="uppercase font-loos-wide md:mt-6 text-4xl md:text-6xl xl:text-7xl font-bold text-orange">
             Revolutionizing AI Tools
           </h1>
           <p className="font-aeroport text-xl md:text-2xl text-white/80 max-w-4xl mx-auto">

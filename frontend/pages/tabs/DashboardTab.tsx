@@ -18,13 +18,13 @@ const DashboardTab: React.FC = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
       <div className="flex items-center justify-between">
         <h2 className="font-loos-wide text-3xl text-orange">Project Dashboard</h2>
-        <motion.button
+        {/* <motion.button
           whileHover={{ scale: 1.05 }}
           className="flex items-center gap-2 px-6 py-3 bg-orange/20 text-orange rounded-xl"
         >
           <Rocket className="w-5 h-5" />
           New Project
-        </motion.button>
+        </motion.button> */}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { ThemePreference, useTheme } from '../../context/ThemeContext';
 
 type NotificationSettings = {
   emailNotifications: boolean;
@@ -62,13 +63,14 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const [deleteError, setDeleteError] = React.useState('');
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
   const updateSettings = async (updates: Partial<NotificationSettings>) => {
     if (!user) return;
     const newSettings = { ...notificationSettings, ...updates };
     setNotificationSettings(newSettings);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/settings`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/notifications`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +78,10 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
         },
         body: JSON.stringify(newSettings),
       });
-      if (!res.ok) throw new Error('Failed to update settings');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update settings');
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error updating settings:', error);
@@ -88,8 +93,9 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
     updateSettings({ [key]: !notificationSettings[key] });
   };
 
-  const handleThemeChange = (theme: string) => {
-    updateSettings({ theme });
+  const handleThemeChange = (nextTheme: ThemePreference) => {
+    setTheme(nextTheme);
+    updateSettings({ theme: nextTheme });
   };
 
   const handleChangePassword = async () => {
@@ -169,22 +175,34 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
       <h2 className="font-loos-wide text-3xl text-orange">System Settings</h2>
       <div className="grid lg:grid-cols-2 gap-8">
-        <div className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div
+          className={`backdrop-blur-lg border rounded-2xl p-6 ${
+            resolvedTheme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'
+          }`}
+        >
           <h3 className="font-loos-wide text-xl mb-6">Preferences</h3>
           <div className="space-y-6">
             <div className="space-y-4">
               <label className="font-loos-wide">Theme</label>
               <div className="grid grid-cols-3 gap-4">
-                {['Light', 'Dark', 'System'].map((theme) => (
+                {[
+                  { label: 'Light', value: 'light' as ThemePreference },
+                  { label: 'Dark', value: 'dark' as ThemePreference },
+                  { label: 'System', value: 'system' as ThemePreference },
+                ].map((option) => (
                   <motion.div
-                    key={theme}
+                    key={option.value}
                     whileHover={{ scale: 1.05 }}
-                    onClick={() => handleThemeChange(theme)}
+                    onClick={() => handleThemeChange(option.value)}
                     className={`p-4 rounded-xl cursor-pointer text-center ${
-                      notificationSettings.theme === theme ? 'bg-orange text-black' : 'bg-white/5 hover:bg-white/10'
+                      theme === option.value
+                        ? 'bg-orange text-black'
+                        : resolvedTheme === 'dark'
+                        ? 'bg-white/5 hover:bg-white/10'
+                        : 'bg-slate-100 hover:bg-slate-200'
                     }`}
                   >
-                    {theme}
+                    {option.label}
                   </motion.div>
                 ))}
               </div>
@@ -197,7 +215,12 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
                   { label: 'Push Notifications', key: 'pushNotifications' },
                   { label: 'SMS Alerts', key: 'smsAlerts' },
                 ] as const).map((setting) => (
-                  <div key={setting.key} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div
+                    key={setting.key}
+                    className={`flex items-center justify-between p-3 rounded-xl ${
+                      resolvedTheme === 'dark' ? 'bg-white/5' : 'bg-slate-100'
+                    }`}
+                  >
                     <span>{setting.label}</span>
                     <motion.div
                       whileTap={{ scale: 0.95 }}
@@ -218,7 +241,11 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
         </div>
-        <div className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div
+          className={`backdrop-blur-lg border rounded-2xl p-6 ${
+            resolvedTheme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'
+          }`}
+        >
           <h3 className="font-loos-wide text-xl mb-6">Account Security</h3>
           <div className="space-y-6">
             <div className="space-y-4">
@@ -228,14 +255,22 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
                 placeholder="New Password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-orange"
+                className={`w-full border rounded-xl p-4 focus:outline-none focus:border-orange ${
+                  resolvedTheme === 'dark'
+                    ? 'bg-white/5 border-white/10'
+                    : 'bg-slate-50 border-slate-300 text-slate-900'
+                }`}
               />
               <input
                 type="password"
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-orange"
+                className={`w-full border rounded-xl p-4 focus:outline-none focus:border-orange ${
+                  resolvedTheme === 'dark'
+                    ? 'bg-white/5 border-white/10'
+                    : 'bg-slate-50 border-slate-300 text-slate-900'
+                }`}
               />
               {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
               {passwordSuccess && <p className="text-green-400 text-sm">{passwordSuccess}</p>}
@@ -250,7 +285,9 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
             <div className="space-y-4">
               <label className="font-loos-wide">Delete Account</label>
-              <p className="text-white/60 text-sm">This action is irreversible. All your data will be permanently deleted.</p>
+              <p className={`text-sm ${resolvedTheme === 'dark' ? 'text-white/60' : 'text-slate-600'}`}>
+                This action is irreversible. All your data will be permanently deleted.
+              </p>
               {deleteError && <p className="text-red-400 text-sm">{deleteError}</p>}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -258,7 +295,11 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
                 onClick={handleDeleteAccount}
                 disabled={isDeleting}
                 className={`w-full py-3 rounded-xl font-loos-wide ${
-                  deleteConfirm ? 'bg-red-500 text-white' : 'bg-white/5 text-red-400 hover:bg-white/10'
+                  deleteConfirm
+                    ? 'bg-red-500 text-white'
+                    : resolvedTheme === 'dark'
+                    ? 'bg-white/5 text-red-400 hover:bg-white/10'
+                    : 'bg-slate-100 text-red-500 hover:bg-slate-200'
                 } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isDeleting ? 'Deleting...' : deleteConfirm ? 'Confirm Deletion' : 'Delete Account'}
@@ -268,7 +309,11 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setDeleteConfirm(false)}
-                  className="w-full py-3 bg-white/5 text-white rounded-xl font-loos-wide hover:bg-white/10"
+                  className={`w-full py-3 rounded-xl font-loos-wide ${
+                    resolvedTheme === 'dark'
+                      ? 'bg-white/5 text-white hover:bg-white/10'
+                      : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
+                  }`}
                 >
                   Cancel
                 </motion.button>

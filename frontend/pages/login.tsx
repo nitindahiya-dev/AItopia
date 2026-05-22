@@ -3,12 +3,13 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, Sparkles, Rocket, Fingerprint } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [error, setError] = useState('');
   const { user, login } = useAuth();
+  const { success, error } = useToast();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,19 +24,14 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     if (activeTab === 'login') {
       try {
         console.log('Attempting login:', { email: form.email });
         await login(form.email, form.password);
         router.push('/dashboard');
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message || 'Failed to log in. Please try again.');
-        } else {
-          setError('Failed to log in. Please try again.');
-        }
+      } catch {
+        // AuthContext already emits login error toasts.
       }
     } else {
       try {
@@ -49,13 +45,14 @@ const Login = () => {
         if (!res.ok) {
           throw new Error(data.message || 'Signup failed');
         }
+        success('Registration successful');
         await login(form.email, form.password);
         router.push('/dashboard');
       } catch (err: unknown) {
         if (err instanceof Error) {
-          setError(err.message || 'Failed to sign up. Please try again.');
+          error(err.message || 'Failed to sign up. Please try again.');
         } else {
-          setError('Failed to sign up. Please try again.');
+          error('Failed to sign up. Please try again.');
         }
       }
     }
@@ -169,8 +166,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
-            {error && <p className="text-red-400 text-center">{error}</p>}
 
             <motion.button
               type="submit"

@@ -1,6 +1,7 @@
 //frontend/context/authContext.tsx
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useToast } from './ToastContext';
 
 interface User {
   id: number;
@@ -19,7 +20,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: (showToast?: boolean) => void;
   updateUserSubscription: (subscription: { plan: string; selectedTools: string[]; status: string }) => void;
   refreshUserProfile: () => Promise<void>;
 }
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const { success, error: toastError } = useToast();
 
   const login = async (email: string, password: string) => {
     try {
@@ -58,15 +60,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(userData);
       localStorage.setItem('token', data.token);
       await refreshUserProfile(); // Ensure latest profile data after login
+      success('Login successful');
     } catch (error) {
       console.error('Login error:', error);
+      if (error instanceof Error) {
+        toastError(error.message || 'Login failed. Please try again.');
+      } else {
+        toastError('Login failed. Please try again.');
+      }
       throw error;
     }
   };
 
-  const logout = () => {
+  const logout = (showToast = true) => {
     setUser(null);
     localStorage.removeItem('token');
+    if (showToast) {
+      success('Logged out successfully');
+    }
   };
 
   const updateUserSubscription = (subscription: { plan: string; selectedTools: string[]; status: string }) => {
@@ -103,11 +114,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       } else {
         console.error('Failed to refresh profile:', data.message);
-        logout();
+        toastError('Session expired. Please log in again.');
+        logout(false);
       }
     } catch (error) {
       console.error('Error refreshing profile:', error);
-      logout();
+      logout(false);
     }
   };
 

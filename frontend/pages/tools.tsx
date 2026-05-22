@@ -108,7 +108,7 @@ const ToolsPage = () => {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="uppercase font-loos-wide text-4xl md:text-6xl xl:text-7xl font-bold text-orange"
+            className="uppercase md:mt-6 font-loos-wide text-4xl md:text-6xl xl:text-7xl font-bold text-orange"
           >
             AI Toolbox
           </motion.h1>

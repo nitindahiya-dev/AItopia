@@ -15,7 +15,7 @@ const Home = () => {
   return (
     <div className="relative w-full overflow-hidden">
       <div className="relative h-screen md:w-full">
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute md:mt-6 inset-0 -z-10">
           <Scene />
         </div>
         <div className="relative overflow-x-hidden z-10 md:w-[70vw] text-center h-screen mr-2 md:mx-auto flex flex-col items-center justify-center gap-3 md:gap-7">

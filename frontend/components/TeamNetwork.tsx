@@ -178,12 +178,17 @@ const TeamNetwork = () => {
         </div>
 
         {/* Legend */}
-        <div className="grid md:grid-cols-4 gap-6 mt-12">
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {['Core Systems', 'Interface Layer', 'Data Network', 'Edge Nodes'].map((label, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-orange" />
-              <span className="font-loos-wide">{label}</span>
-              <div className="ml-auto font-aeroport text-white/60">0{i+1}</div>
+            <div
+              key={i}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-orange shadow-[0_0_10px_rgba(255,165,0,0.6)]" />
+                <span className="font-loos-wide text-sm md:text-base truncate">{label}</span>
+                <div className="ml-auto font-aeroport text-white/60 text-sm">0{i + 1}</div>
+              </div>
             </div>
           ))}
         </div>

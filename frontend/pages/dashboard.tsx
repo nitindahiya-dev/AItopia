@@ -12,6 +12,7 @@ import InvoiceTab from './tabs/InvoiceTab';
 import HelpTab from './tabs/HelpTab';
 import DashboardTab from './tabs/DashboardTab';
 import SettingsTab from './tabs/SettingsTab';
+import { ThemePreference, useTheme } from '../context/ThemeContext';
 
 // Define types
 type PackageType = {
@@ -40,6 +41,7 @@ type NotificationSettings = {
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { logout, user } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
   const router = useRouter();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,14 @@ const Dashboard = () => {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  const normalizeTheme = (value?: string): ThemePreference => {
+    const normalized = (value || '').toLowerCase();
+    if (normalized === 'light' || normalized === 'dark' || normalized === 'system') {
+      return normalized;
+    }
+    return 'dark';
+  };
 
   // Memoize packages so that its reference remains constant.
   const packages = useMemo<PackageType[]>(() => [
@@ -114,7 +124,11 @@ const Dashboard = () => {
         ]);
   
         if (profileRes.ok) setUserData(await profileRes.json());
-        if (settingsRes.ok) setNotificationSettings(await settingsRes.json());
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          setNotificationSettings(settings);
+          setTheme(normalizeTheme(settings.theme));
+        }
         if (subRes.ok) {
           const { plan, selectedTools } = await subRes.json();
           const pkg = packages.find(p => p.id === plan) || packages[1]; // Default to 'pro'
@@ -129,7 +143,7 @@ const Dashboard = () => {
     };
   
     fetchData();
-  }, [user, router, packages]);
+  }, [user, router, packages, setTheme]);
 
   const tabs = [
     { id: 'dashboard', icon: <BarChart />, label: 'Dashboard' },
@@ -147,12 +161,24 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-custom-black mt-10 flex items-center justify-center">
+    <div
+      className={`min-h-screen mt-10 flex items-center justify-center transition-colors ${
+        resolvedTheme === 'dark' ? 'bg-custom-black text-white' : 'bg-slate-100 text-slate-900'
+      }`}
+    >
       <main className="px-4 sm:px-0 sm:w-[90vw] md:w-[80vw] xl:w-[70vw] mx-auto py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <div className="relative backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-6 h-fit group">
-            <div className="absolute inset-0 bg-orange/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none" />
+          <div
+            className={`relative backdrop-blur-lg border rounded-2xl p-6 h-fit group ${
+              resolvedTheme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'
+            }`}
+          >
+            <div
+              className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none ${
+                resolvedTheme === 'dark' ? 'bg-orange/10' : 'bg-orange/5'
+              }`}
+            />
             <nav className="space-y-2">
               {tabs.map((tab) => (
                 <motion.button
@@ -161,7 +187,11 @@ const Dashboard = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all ${
-                    activeTab === tab.id ? 'bg-gradient-to-r from-orange to-amber-500 text-black' : 'hover:bg-white/10'
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-orange to-amber-500 text-black'
+                      : resolvedTheme === 'dark'
+                      ? 'hover:bg-white/10'
+                      : 'hover:bg-slate-100'
                   }`}
                 >
                   {tab.icon}
@@ -172,7 +202,9 @@ const Dashboard = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogout}
-                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-white/10 mt-4"
+                className={`w-full flex items-center gap-4 p-4 rounded-xl mt-4 ${
+                  resolvedTheme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-100'
+                }`}
               >
                 <LogOut />
                 <span className="font-loos-wide">Log Out</span>
