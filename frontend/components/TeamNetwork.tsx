@@ -55,18 +55,18 @@ const TeamNetwork = () => {
   ];
 
   return (
-    <div className="relative min-h-screen py-28 overflow-hidden">
+    <div className="relative min-h-screen pt-28 md:pt-32 pb-20 overflow-hidden">
       {/* Animated background elements */}
-      <motion.div 
+      <motion.div
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
         className="absolute -left-[400px] top-1/4 w-[1000px] h-[1000px] bg-gradient-to-r from-orange/10 to-amber-500/10 blur-3xl rounded-full"
       />
-      
-      <div className="relative z-10 container mx-auto px-4">
+
+      <div className="relative z-10 container mx-auto px-5 md:px-4">
         {/* Header */}
         <div className="text-center mb-20">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="font-loos-wide text-6xl md:text-8xl bg-gradient-to-r from-orange to-amber-500 bg-clip-text text-transparent mb-6"
@@ -79,7 +79,7 @@ const TeamNetwork = () => {
         </div>
 
         {/* Interactive Network */}
-        <div className="relative h-[800px] w-full bg-white/5 border border-white/10 rounded-[40px] p-12">
+        <div className="relative h-[680px] md:h-[800px] w-full bg-white/5 border border-white/10 rounded-[28px] md:rounded-[40px] p-4 md:p-12 overflow-hidden">
           {/* Connections */}
           {connections.map((connection, index) => {
             const fromNode = nodes.find(n => n.id === connection.from);
@@ -112,11 +112,17 @@ const TeamNetwork = () => {
           {nodes.map((node) => (
             <motion.div
               key={node.id}
-              className="absolute backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-orange/50 transition-all"
+              className="absolute w-[220px]  max-w-[85vw] backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 cursor-pointer hover:border-orange/50 transition-all"
               style={{
-                left: `${node.x}%`,
-                top: `${node.y}%`,
-                width: '300px'
+                left:
+                  typeof window !== 'undefined' && window.innerWidth < 768
+                    ? `${Math.min(node.x, 55)}%`
+                    : `${node.x}%`,
+
+                top:
+                  typeof window !== 'undefined' && window.innerWidth < 768
+                    ? `${node.y + 4}%`
+                    : `${node.y}%`,
               }}
               whileHover={{ scale: 1.05 }}
             >
@@ -125,32 +131,32 @@ const TeamNetwork = () => {
                   {node.icon}
                 </div>
                 <div>
-                  <h3 className="font-loos-wide text-2xl">{node.name}</h3>
-                  <p className="font-aeroport text-white/60">{node.description}</p>
+                  <h3 className="font-loos-wide text-lg md:text-2xl">{node.name}</h3>
+                  <p className="font-aeroport text-sm md:text-base text-white/60">{node.description}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-aeroport text-sm text-white/60">Health</span>
                   <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-green-400 rounded-full" 
+                    <div
+                      className="h-full bg-green-400 rounded-full"
                       style={{ width: `${Math.random() * 40 + 60}%` }}
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="font-aeroport text-sm text-white/60">Load</span>
                   <div className="flex gap-1">
                     {[0, 1, 2].map((i) => (
-                      <div 
+                      <div
                         key={i}
                         className="w-2 h-2 rounded-full bg-white/10"
-                        style={{ 
+                        style={{
                           opacity: i < (node.connections.length / 2) ? 1 : 0.3,
-                          backgroundColor: i < 2 ? '#FFA500' : undefined 
+                          backgroundColor: i < 2 ? '#FFA500' : undefined
                         }}
                       />
                     ))}
@@ -161,7 +167,7 @@ const TeamNetwork = () => {
           ))}
 
           {/* Floating Interaction */}
-          <motion.div 
+          <motion.div
             className="absolute backdrop-blur-xl bg-white/5 border border-white/10 rounded-full p-4 cursor-pointer"
             style={{ left: '45%', top: '70%' }}
             animate={{

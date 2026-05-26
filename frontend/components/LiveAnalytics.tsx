@@ -50,7 +50,7 @@ const LiveAnalytics = () => {
         className="absolute w-[600px] h-[600px] bg-gradient-to-r from-orange/10 to-amber-500/10 blur-3xl -top-64 -left-64 rounded-full"
       />
 
-      <div className="relative z-10 container mx-auto px-4">
+      <div className="relative z-10 container mx-auto px-5 md:px-4">
         {/* Header */}
         <div className="text-center mb-20">
           <motion.h2

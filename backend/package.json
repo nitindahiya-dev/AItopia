@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "npm run build && nodemon dist/server.js --watch dist",
+    "build": "node init && tsc",
+    "start": "node init && node dist/server.js",
+    "dev": "node init && npm run build && nodemon dist/server.js --watch dist",
     "postinstall": "prisma generate && prisma migrate deploy --schema prisma/schema.prisma",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
