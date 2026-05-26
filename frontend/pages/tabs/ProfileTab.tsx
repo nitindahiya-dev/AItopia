@@ -168,28 +168,65 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ userData, loading }) => {
           <div className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
             <h3 className="font-loos-wide text-xl">Account Details</h3>
             <div className="grid md:grid-cols-2 gap-6">
-              {[
-                { label: 'Full Name', value: userData.name, icon: <User /> },
-                { label: 'Email', value: userData.email, icon: <Cloud /> },
-                {
-                  label: 'Last Login',
-                  value: userData.lastLogin ? new Date(userData.lastLogin).toLocaleString() : 'Never',
-                  icon: <Clock />,
-                },
-                { label: '2FA', value: 'Enabled', icon: <Shield /> },
-              ].map((field, i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ scale: 1.02 }}
-                  className="p-4 bg-white/5 rounded-xl border border-white/10 flex items-center gap-4"
-                >
-                  {field.icon}
-                  <div>
-                    <div className="font-aeroport text-white/80">{field.label}</div>
-                    <div className="font-loos-wide">{field.value}</div>
-                  </div>
-                </motion.div>
-              ))}
+ {[
+  { label: 'Full Name', value: userData.name, icon: <User /> },
+  { label: 'Email', value: userData.email, icon: <Cloud /> },
+  {
+    label: 'Last Login',
+    value: userData.lastLogin
+      ? new Date(userData.lastLogin).toLocaleString()
+      : 'Never',
+    icon: <Clock />,
+  },
+  { label: '2FA', value: 'Enabled', icon: <Shield /> },
+].map((field, i) => (
+
+  <motion.div
+    key={i}
+    whileHover={{ scale: 1.02 }}
+    className="
+      p-4
+      bg-white/5
+      rounded-xl
+      border border-white/10
+      flex
+      items-center
+      gap-4
+      overflow-hidden
+      w-full
+    "
+  >
+
+    <div className="flex-shrink-0">
+      {field.icon}
+    </div>
+
+    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+      <div className="font-aeroport text-white/80">
+        {field.label}
+      </div>
+
+      <div
+        className="
+          font-loos-wide
+          w-full
+          max-w-full
+          overflow-hidden
+          whitespace-nowrap
+          text-ellipsis
+          block
+        "
+        title={String(field.value)}
+      >
+        {field.value}
+      </div>
+
+    </div>
+
+  </motion.div>
+
+))}
             </div>
           </div>
         </div>

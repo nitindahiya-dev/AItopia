@@ -95,65 +95,190 @@ router.post('/voicecraft', upload.single('audio'), async (req, res): Promise<voi
 });
 
 // ----- Upload & Audio Extraction Endpoint -----
-router.post('/upload', upload.single('video'), async (req, res) => {
-  if (!req.file) {
-    res.status(400).json({ error: 'No video uploaded' });
-    return;
-  }
-  const videoPath = req.file.path;
-  const audioPath = path.join('uploads', `${req.file.filename}.m4a`);
-  const ffmpeg = require('fluent-ffmpeg');
-  const ffmpegStatic = require('ffmpeg-static');
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-  ffmpeg(videoPath)
-    .noVideo()
-    .audioCodec('copy')
-    .save(audioPath)
-    .on('end', () => {
-      fs.unlinkSync(videoPath);
-      res.json({ audioPath });
-    })
-    .on('error', (err: Error) => {
-      console.error('Error extracting audio:', err);
-      res.status(500).json({ error: 'Audio extraction failed' });
-    });
-});
+
+router.post(
+  '/upload',
+  upload.single('video'),
+
+  async (req, res) => {
+
+    if (!req.file) {
+
+      return res.status(400).json({
+        error: 'No video uploaded'
+      });
+
+    }
+
+    const videoPath =
+      req.file.path;
+
+    const audioPath =
+      path.join(
+        'uploads',
+        `${req.file.filename}.wav`
+      );
+
+    const ffmpeg =
+      require('fluent-ffmpeg');
+
+    const ffmpegStatic =
+      require('ffmpeg-static');
+
+    ffmpeg.setFfmpegPath(
+      ffmpegStatic
+    );
+
+    ffmpeg(videoPath)
+
+      .input(videoPath)
+
+      .noVideo()
+
+      .audioCodec('pcm_s16le')
+
+      .audioFrequency(16000)
+
+      .audioChannels(1)
+
+      .outputFormat('wav')
+
+      .on('end', () => {
+
+        console.log(
+          'WAV created:',
+          audioPath
+        );
+
+        fs.unlinkSync(videoPath);
+
+        return res.json({
+          audioPath
+        });
+
+      })
+
+      .on('error', (err: Error) => {
+
+        console.error(
+          'FFmpeg extraction error:',
+          err
+        );
+
+        if (
+          fs.existsSync(videoPath)
+        ) {
+          fs.unlinkSync(videoPath);
+        }
+
+        return res.status(500).json({
+          error: 'Audio extraction failed'
+        });
+
+      })
+
+      .save(audioPath);
+
+  });
 
 // ----- ASR Endpoint -----
-router.post('/asr', upload.single('audio'), async (req, res) => {
-  if (!req.file) {
-    res.status(400).json({ error: 'No audio file provided' });
-    return;
-  }
-  const audioPath = req.file.path;
-  try {
-    const audioData = fs.readFileSync(audioPath);
-    const contentType = 'audio/m4a';
-    const response = await axios.post(
-      'https://api-inference.huggingface.co/models/openai/whisper-small',
-      audioData,
-      {
-        headers: {
-          'Content-Type': contentType,
-          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`
-        },
-        timeout: 30000
-      }
-    );
-    fs.unlinkSync(audioPath);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('ASR error:', error.response?.data || error.message);
-    // Schedule deletion after 1 minute if the file still exists
-    setTimeout(() => {
-      if (fs.existsSync(audioPath)) {
+
+router.post(
+  '/asr',
+  upload.single('audio'),
+
+  async (req, res) => {
+
+    if (!req.file) {
+
+      return res.status(400).json({
+        error: 'No audio uploaded'
+      });
+
+    }
+
+    const audioPath =
+      req.file.path;
+
+    try {
+
+      console.log(
+        'ASR file:',
+        audioPath
+      );
+
+      const audioData =
+        fs.readFileSync(audioPath);
+
+      console.log(
+        'Uploading to Whisper...'
+      );
+
+      console.time(
+        'WHISPER_TIME'
+      );
+
+      const response =
+        await axios.post(
+
+          'https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3',
+
+          audioData,
+
+          {
+            headers: {
+
+              Authorization:
+                `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+
+              'Content-Type':
+                'audio/wav',
+
+              Accept:
+                'application/json'
+
+            },
+
+            timeout: 300000
+
+          }
+
+        );
+
+      console.timeEnd(
+        'WHISPER_TIME'
+      );
+
+      fs.unlinkSync(audioPath);
+
+      return res.json(
+        response.data
+      );
+
+    }
+    catch (error: any) {
+
+      console.error(
+        'ASR error:',
+        error.response?.data ||
+        error.message
+      );
+
+      if (
+        fs.existsSync(audioPath)
+      ) {
         fs.unlinkSync(audioPath);
-        console.log(`Deleted file ${audioPath} after 1 minute.`);
       }
-    }, 60000);
-    res.status(500).json({ error: 'ASR failed' });
-  }
-});
+
+      return res.status(500).json({
+        error:
+          error.response?.data ||
+          'ASR failed'
+      });
+
+    }
+
+  });
 
 // ----- Translation Endpoint -----
 router.post('/translate', async (req, res) => {
@@ -213,15 +338,15 @@ router.post('/generate-art', async (req, res) => {
     } else if (aspectRatio === '4:3') {
       height = Math.round(width * 3 / 4);
     }
-    
+
     // Compose the input string.
     const input = `${prompt}, art style: ${style}, creativity: ${creativity}%, aspect ratio: ${aspectRatio}`;
     console.log("Input to generate-art:", input);
-    
+
     // Request 2 images from the model. We use responseType: 'arraybuffer' to capture binary data.
     const response = await axios.post(
       'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2',
-      { 
+      {
         inputs: input,
         parameters: { num_images_per_prompt: 2, width, height }
       },
@@ -231,11 +356,11 @@ router.post('/generate-art', async (req, res) => {
         responseType: 'arraybuffer'
       }
     );
-    
+
     // Check the Content-Type header to decide how to parse the response.
     const contentType = response.headers['content-type'];
     let images: string[] = [];
-    
+
     if (contentType && contentType.includes('application/json')) {
       // If the response is JSON, parse it.
       const jsonData = JSON.parse(Buffer.from(response.data).toString());
@@ -267,17 +392,17 @@ router.post('/generate-art', async (req, res) => {
     } else {
       console.error("Unexpected content-type:", contentType);
     }
-    
+
     // If only one image is returned, duplicate it.
     if (images.length === 1) {
       images.push(images[0]);
     }
-    
+
     if (images.length < 1) {
       console.error('Not enough images returned:', images);
       return res.status(500).json({ error: 'Image generation failed: not enough images returned' });
     }
-    
+
     res.json({ images });
   } catch (error: any) {
     if (error.response && error.response.status === 503) {

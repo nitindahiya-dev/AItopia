@@ -1,4 +1,4 @@
-import { useState, useRef,  } from 'react';
+import { useState, useRef, } from 'react';
 import { Video, Languages, Captions, Download, ArrowLeft, Settings, Clock } from 'lucide-react';
 import Link from 'next/link';
 
@@ -6,61 +6,228 @@ const LingoSync = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [subtitles, setSubtitles] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [targetLanguage, ] = useState('en'); // default English; user can change
+  const [targetLanguage,] = useState('en'); // default English; user can change
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setVideoFile(file);
-      setIsProcessing(true);
+  const handleVideoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
 
-      try {
-        // Step 1: Upload video to extract audio.
-        const videoFormData = new FormData();
-        videoFormData.append('video', file);
-        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/upload`, {
-          method: 'POST',
-          body: videoFormData,
-        });
-        const uploadData = await uploadRes.json();
-        console.log('Audio path:', uploadData.audioPath);
+    if (
+      !e.target.files ||
+      !e.target.files[0]
+    ) return;
 
-        // Step 2: Call the ASR endpoint with the extracted audio.
-        // For demonstration, re-using the same file.
-        const audioFormData = new FormData();
-        audioFormData.append('audio', file);
-        const asrRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/asr`, {
-          method: 'POST',
-          body: audioFormData,
-        });
-        const asrData = await asrRes.json();
-        console.log('ASR data:', asrData);
-        let transcript = asrData.text || JSON.stringify(asrData, null, 2);
-        console.log('Transcript before translation:', transcript);
+    const file =
+      e.target.files[0];
 
-        // Step 3: If target language is not English, translate the transcript.
-        if (targetLanguage !== 'en') {
-          console.log('Translating transcript to:', targetLanguage);
-          const translationRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/translate`, {
+    setVideoFile(file);
+    setIsProcessing(true);
+
+    try {
+
+      /* STEP 1 */
+
+      const videoFormData =
+        new FormData();
+
+      videoFormData.append(
+        'video',
+        file
+      );
+
+      const uploadRes =
+        await fetch(
+
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/upload`,
+
+          {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: transcript, targetLanguage })
-          });
-          const translationData = await translationRes.json();
-          console.log('Translation data:', translationData);
-          transcript = translationData.translatedText || transcript;
-        }
+            body: videoFormData
+          }
 
-        // Set the subtitles (assumed to be in SRT format)
-        setSubtitles(transcript);
-      } catch (error) {
-        console.error('Error processing video:', error);
+        );
+
+      const uploadData =
+        await uploadRes.json();
+
+      console.log(
+        'Upload response:',
+        uploadData
+      );
+
+      if (
+        !uploadRes.ok
+      ) {
+
+        throw new Error(
+          uploadData.error ||
+          'Upload failed'
+        );
+
       }
-      setIsProcessing(false);
+
+      /* STEP 2 */
+
+      const audioURL =
+        `http://localhost:5000/${uploadData.audioPath}`;
+
+      console.log(
+        'Fetching audio:',
+        audioURL
+      );
+
+      const audioResponse =
+        await fetch(audioURL);
+
+      if (
+        !audioResponse.ok
+      ) {
+
+        throw new Error(
+          'Could not fetch extracted audio'
+        );
+
+      }
+
+      const audioBlob =
+        await audioResponse.blob();
+
+      const audioFormData =
+        new FormData();
+
+      audioFormData.append(
+        'audio',
+        audioBlob,
+        'extracted.wav'
+      );
+
+      /* STEP 3 */
+
+      const asrRes =
+        await fetch(
+
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/asr`,
+
+          {
+            method: 'POST',
+            body: audioFormData
+          }
+
+        );
+
+      const asrData =
+        await asrRes.json();
+
+      console.log(
+        'ASR response:',
+        asrData
+      );
+
+      if (
+        !asrRes.ok
+      ) {
+
+        throw new Error(
+
+          typeof asrData.error === 'string'
+
+            ? asrData.error
+
+            : JSON.stringify(
+              asrData.error,
+              null,
+              2
+            )
+
+        );
+
+      }
+
+      if (
+        !asrData.text
+      ) {
+
+        throw new Error(
+          'No transcript returned'
+        );
+
+      }
+
+      let transcript =
+        asrData.text;
+
+      /* STEP 4 */
+
+      if (
+        targetLanguage !== 'en'
+      ) {
+
+        const translationRes =
+          await fetch(
+
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/translate`,
+
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body: JSON.stringify({
+                text: transcript,
+                targetLanguage
+              })
+            }
+          );
+
+        const translationData =
+          await translationRes.json();
+
+        transcript =
+          translationData
+            .translatedText ||
+          transcript;
+
+      }
+
+      setSubtitles(
+        transcript
+      );
+
     }
+    catch (error) {
+
+      console.error(
+        'Video processing error:',
+        error
+      );
+
+      if (
+        error instanceof Error
+      ) {
+
+        setSubtitles(
+
+          `ERROR:
+
+${error.message}
+
+Check backend logs.`
+
+        );
+
+      }
+
+    }
+    finally {
+
+      setIsProcessing(false);
+
+    }
+
   };
 
   const handleDownloadSRT = () => {
@@ -141,9 +308,9 @@ const LingoSync = () => {
                 <div className="aspect-video bg-white/5 border border-white/10 rounded-2xl overflow-hidden relative">
                   <h3 className="font-loos-wide text-xl text-orange m-5">Video Preview</h3>
                   {videoFile && (
-                    <video 
+                    <video
                       ref={videoRef}
-                      src={URL.createObjectURL(videoFile)} 
+                      src={URL.createObjectURL(videoFile)}
                       className="w-full h-full object-contain"
                       controls
                     />
@@ -153,7 +320,7 @@ const LingoSync = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-loos-wide text-xl text-orange">Generated Subtitles</h3>
-                    <button 
+                    <button
                       onClick={handleDownloadSRT}
                       className="text-orange hover:text-orange/80 flex items-center gap-2"
                     >
@@ -201,7 +368,7 @@ const LingoSync = () => {
 
 
 
-const FeatureStep = ({ icon, title, description }: { 
+const FeatureStep = ({ icon, title, description }: {
   icon: React.ReactNode;
   title: string;
   description: string;

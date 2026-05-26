@@ -90,6 +90,7 @@ const CheckoutModal: React.FC<{
   const [step, setStep] = useState<'selectTools' | 'payment'>('selectTools');
   const [localSelectedTools, setLocalSelectedTools] = useState<string[]>([]);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const { updateUserSubscription, refreshUserProfile } = useAuth();
 
   const handleToolSelect = (tool: string): void => {
@@ -152,8 +153,10 @@ const CheckoutModal: React.FC<{
   };
 
   const handleRazorpayPayment = async (): Promise<void> => {
+    setProcessingPayment(true);
     if (!user) {
       setPaymentError('User not authenticated');
+      setProcessingPayment(false);
       return;
     }
     if (selectedPackage.price === 0) {
@@ -161,15 +164,16 @@ const CheckoutModal: React.FC<{
       await handlePaymentSuccess();
       return;
     }
-  
+
     console.log('Initiating Razorpay payment...');
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
       setPaymentError('Razorpay SDK failed to load');
       console.error('Razorpay SDK failed to load');
+      setProcessingPayment(false);
       return;
     }
-  
+
     try {
       const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-razorpay-order`, {
         method: 'POST',
@@ -184,15 +188,17 @@ const CheckoutModal: React.FC<{
       if (!orderResponse.ok || !orderId) {
         setPaymentError('Failed to create Razorpay order');
         console.error('Order creation failed:', orderData);
+        setProcessingPayment(false);
         return;
       }
-  
+
       if (!process.env.NEXT_PUBLIC_RAZOR_PAY_KEY_ID) {
         setPaymentError('Payment configuration missing');
         console.error('Razorpay key is not defined');
+        setProcessingPayment(false);
         return;
       }
-  
+
       const options: RazorpayOptions = {
         key: process.env.NEXT_PUBLIC_RAZOR_PAY_KEY_ID,
         amount: selectedPackage.price * 100,
@@ -216,8 +222,11 @@ const CheckoutModal: React.FC<{
             const verifyData = await verifyResponse.json();
             console.log('Verification response:', verifyData);
             if (verifyData.success) {
-              console.log('Razorpay payment verified');
+              console.log(
+                'Razorpay payment verified'
+              );
               await handlePaymentSuccess();
+              onClose();
             } else {
               setPaymentError('Payment verification failed');
               console.error('Verification failed:', verifyData.error);
@@ -234,7 +243,7 @@ const CheckoutModal: React.FC<{
           email: user.email || '',
         },
       };
-  
+
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (response: RazorpayResponse) => {
         console.error('Razorpay payment failed:', response);
@@ -288,17 +297,15 @@ const CheckoutModal: React.FC<{
                     <motion.div
                       key={tool}
                       whileTap={{ scale: 0.95 }}
-                      className={`p-2 rounded-lg cursor-pointer transition-all ${
-                        localSelectedTools.includes(tool)
-                          ? 'bg-orange text-black'
-                          : 'bg-white/5 hover:bg-white/10'
-                      } ${
-                        selectedPackage.toolsIncluded !== 'Unlimited' &&
-                        localSelectedTools.length >= (selectedPackage.toolsIncluded as number) &&
-                        !localSelectedTools.includes(tool)
+                      className={`p-2 rounded-lg cursor-pointer transition-all ${localSelectedTools.includes(tool)
+                        ? 'bg-orange text-black'
+                        : 'bg-white/5 hover:bg-white/10'
+                        } ${selectedPackage.toolsIncluded !== 'Unlimited' &&
+                          localSelectedTools.length >= (selectedPackage.toolsIncluded as number) &&
+                          !localSelectedTools.includes(tool)
                           ? 'opacity-50 cursor-not-allowed'
                           : ''
-                      }`}
+                        }`}
                       onClick={() => handleToolSelect(tool)}
                     >
                       <div className="flex items-center gap-2">
@@ -334,11 +341,21 @@ const CheckoutModal: React.FC<{
             {paymentError && <p className="text-red-500">{paymentError}</p>}
             <div className="space-y-4">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                className="w-full py-3 rounded-xl font-loos-wide bg-green-500 text-white"
+                whileHover={{
+                  scale: processingPayment
+                    ? 1
+                    : 1.05
+                }}
+
+                disabled={processingPayment}
+                className="w-full py-3 rounded-xl font-loos-wide bg-green-500 text-white disabled:opacity-70"
                 onClick={handleRazorpayPayment}
               >
-                Pay with Razorpay
+
+                {processingPayment
+                  ? 'Processing Payment...'
+                  : 'Pay with Razorpay'}
+
               </motion.button>
             </div>
           </div>
@@ -385,12 +402,11 @@ const PackageTab: React.FC<Props> = ({
             <motion.div
               key={pkg.id}
               whileHover={{ scale: 1.05 }}
-              className={`relative backdrop-blur-lg bg-gradient-to-b ${pkg.gradient} border-2 ${
-                pkg.id === selectedPackage?.id ||
+              className={`relative backdrop-blur-lg bg-gradient-to-b ${pkg.gradient} border-2 ${pkg.id === selectedPackage?.id ||
                 pkg.id === (user?.subscription?.plan?.toLowerCase() ?? '')
-                  ? 'border-orange'
-                  : 'border-white/10'
-              } rounded-2xl p-8 space-y-6`}
+                ? 'border-orange'
+                : 'border-white/10'
+                } rounded-2xl p-8 space-y-6`}
             >
               {pkg.recommended && (
                 <div className="absolute top-0 right-0 bg-orange text-black px-4 py-1 rounded-bl-xl rounded-tr-xl text-sm">

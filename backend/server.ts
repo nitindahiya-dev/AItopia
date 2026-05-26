@@ -46,8 +46,7 @@ app.use(
 app.use(bodyParser.json());
 
 // Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
-
+app.use('/uploads',express.static(path.join(__dirname, '../uploads')));
 // Home route for GET /
 app.get('/', (req, res) => {
   res.send('API is running');
