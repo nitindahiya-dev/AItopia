@@ -2,12 +2,8 @@ import {
   Paintbrush,
   Code2,
   BrainCircuit,
-  Video,
-  Music,
   BookText,
   Speech,
-  Bot,
-  Lock,
   ImageDown,
   Clapperboard,
 } from 'lucide-react';
@@ -29,7 +25,7 @@ export const allTools: Tool[] = [
     category: 'Generative AI',
     icon: <Paintbrush className="w-8 h-8" />,
     description: 'Transform text prompts into stunning digital artwork',
-    link: '/tools/artisanai',
+    link: '/tools/ArtrisanAi',
     linkedPackages: ['Pro', 'Enterprise'],
   },
   {

@@ -150,13 +150,13 @@ const ToolsPage = () => {
                 <div className="flex gap-4">
                   <button
                     onClick={openToolModal}
-                    className="bg-green-500 text-white px-6 py-2 rounded-xl hover:bg-green-600 transition-all"
+                    className="bg-green-500/90 text-white px-6 py-3 rounded-2xl font-loos-wide border border-green-400/30 hover:bg-green-500 hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300"
                   >
                     Manage Tools
                   </button>
                   <Link
                     href="/dashboard"
-                    className="bg-orange text-black px-6 py-2 rounded-xl hover:bg-amber-500 transition-all"
+                    className="bg-orange text-black px-6 py-3 rounded-2xl font-loos-wide border border-orange/30 hover:bg-amber-400 hover:shadow-lg hover:shadow-orange/25 transition-all duration-300"
                   >
                     Manage Subscription
                   </Link>
