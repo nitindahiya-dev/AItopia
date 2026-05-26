@@ -26,6 +26,9 @@ model User {
   subscriptionStartDate DateTime?
   subscriptionEndDate   DateTime?
   invoices              Invoice[] @relation("UserInvoices")
+  otp                   String?
+  otpExpires DateTime?
+  verified Boolean @default(false)
 }
 
 model Tool {

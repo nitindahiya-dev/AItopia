@@ -11,6 +11,7 @@ import {
   getSubscription,
   updateSubscription,
   getInvoices,
+  verifyOTP
 } from '../controllers/userController.js';
 import { authMiddleware } from '../middleware/auth.js';
 
@@ -27,5 +28,10 @@ router.patch('/subscription', authMiddleware, updateSubscription);
 router.get('/invoices', authMiddleware, getInvoices);
 router.get('/profile', authMiddleware, getProfile);
 router.delete('/delete-account', authMiddleware, deleteAccount);
+router.post(
+  "/verify-otp",
+  verifyOTP
+  // Cannot find name 'verifyOTP'.
+);
 
 export default router;

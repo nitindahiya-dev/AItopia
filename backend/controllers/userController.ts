@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { Prisma } from '@prisma/client';
+import { transporter }
+from "../utils/sendEmail.js";
 
 const jwtSecret = process.env.JWT_SECRET || 'your_jwt_secret';
 if (!jwtSecret) throw new Error('JWT_SECRET not set');
@@ -297,56 +299,156 @@ export const getInvoices = async (req: Request, res: Response) => {
 
 
 
-export const signup = async (req: Request, res: Response) => {
-  try {
-    const { email, password, name } = req.body;
-    console.log('Signup request:', { email, name });
-    if (!email || !password || !name) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
+export const signup = async (
+  req: Request,
+  res: Response
+) => {
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(409).json({ message: 'User already exists' });
-    }
+try {
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        plan: 'starter',
-        subscriptionStatus: 'inactive',
-        selectedTools: [],
-      },
-    });
+const { email,password,name } = req.body;
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      jwtSecret,
-      { expiresIn: '7d' },
-    );
+if(!email || !password || !name){
+  return res.status(400).json({
+    message:"All fields required"
+  });
+}
 
-    res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        subscription: {
-          plan: user.plan,
-          selectedTools: user.selectedTools,
-          status: user.subscriptionStatus,
-          startDate: user.subscriptionStartDate?.toISOString(),
-          endDate: user.subscriptionEndDate?.toISOString(),
-        },
-      },
-    });
-  } catch (error) {
-    console.error('Signup Error:', error);
-    res.status(500).json({ message: 'Something went wrong' });
-  }
+const existingUser =
+await prisma.user.findUnique({
+   where:{ email }
+});
+
+if(existingUser){
+   return res.status(409).json({
+      message:"User already exists"
+   });
+}
+
+const otp =
+Math.floor(
+100000 + Math.random()*900000
+).toString();
+
+const hashedPassword =
+await bcrypt.hash(password,12);
+
+await prisma.user.create({
+
+   data:{
+      name,
+      email,
+      password:hashedPassword,
+
+      otp,
+      otpExpires:new Date(
+        Date.now()+10*60*1000
+      ),
+
+      verified:false,
+
+      plan:'starter',
+      subscriptionStatus:'inactive',
+      selectedTools:[]
+   }
+
+});
+
+await transporter.sendMail({
+
+   from:process.env.EMAIL_USER,
+
+   to:email,
+
+   subject:"Verify your account",
+
+   html:`
+      <h2>AItopia Verification</h2>
+      <p>Your OTP:</p>
+      <h1>${otp}</h1>
+      <p>Valid for 10 minutes.</p>
+   `
+});
+
+res.status(201).json({
+   message:"OTP sent to email"
+});
+
+}catch(error){
+
+ console.error(error);
+
+ res.status(500).json({
+   message:"Something went wrong"
+ });
+
+}
+};
+
+export const verifyOTP = async (
+req:Request,
+res:Response
+)=>{
+
+try{
+
+const { email,otp } = req.body;
+
+const user =
+await prisma.user.findUnique({
+   where:{ email }
+});
+
+if(!user){
+
+ return res.status(404).json({
+   message:"User not found"
+ });
+
+}
+
+if(user.otp !== otp){
+
+ return res.status(400).json({
+   message:"Invalid OTP"
+ });
+
+}
+
+if(
+ user.otpExpires &&
+ user.otpExpires < new Date()
+){
+
+ return res.status(400).json({
+   message:"OTP expired"
+ });
+
+}
+
+await prisma.user.update({
+
+   where:{ email },
+
+   data:{
+      verified:true,
+      otp:null,
+      otpExpires:null
+   }
+
+});
+
+res.json({
+   message:"Email verified"
+});
+
+}catch(error){
+
+res.status(500).json({
+  message:"Verification failed"
+});
+
+}
 };
 
 export const login = async (req: Request, res: Response) => {
@@ -441,4 +543,3 @@ export const getProfile = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
-
