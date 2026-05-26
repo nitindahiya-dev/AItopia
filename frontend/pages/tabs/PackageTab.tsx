@@ -273,7 +273,7 @@ const CheckoutModal: React.FC<{
               <h4 className="font-loos-wide text-lg">{selectedPackage.title} Plan</h4>
               <div className="flex justify-between">
                 <span>Price:</span>
-                <span className="font-loos-wide">${selectedPackage.price}/mo</span>
+                <span className="font-loos-wide">₹{selectedPackage.price}/mo</span>
               </div>
               <div className="space-y-2">
                 <span>
@@ -328,7 +328,7 @@ const CheckoutModal: React.FC<{
               </div>
               <div className="flex justify-between text-xl">
                 <span>Total:</span>
-                <span className="font-loos-wide">${selectedPackage.price}/mo</span>
+                <span className="font-loos-wide">₹{selectedPackage.price}/mo</span>
               </div>
             </div>
             {paymentError && <p className="text-red-500">{paymentError}</p>}
@@ -399,7 +399,7 @@ const PackageTab: React.FC<Props> = ({
               )}
               <h3 className="font-loos-wide text-2xl">{pkg.title}</h3>
               <div className="flex items-end gap-2">
-                <span className="text-4xl">${pkg.price}</span>
+                <span className="text-4xl">₹{pkg.price}</span>
                 <span className="text-white/60">/{pkg.price ? 'month' : 'forever'}</span>
               </div>
               <ul className="space-y-2">

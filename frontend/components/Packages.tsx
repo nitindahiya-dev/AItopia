@@ -87,7 +87,7 @@ const Packages = () => {
                     <div>
                       <h3 className="font-loos-wide text-2xl">{pkg.name}</h3>
                       <p className="font-aeroport text-orange">
-                        {pkg.price === 0 ? 'Free Forever' : `$${pkg.price}/mo`}
+                        {pkg.price === 0 ? 'Free Forever' : `₹${pkg.price}/month`}
                       </p>
                     </div>
                   </div>

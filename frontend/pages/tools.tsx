@@ -283,8 +283,8 @@ const ToolsPage = () => {
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 { title: 'Starter Pack', price: 'Free', features: ['3 Basic Tools', 'Community Support', '100 Credits/Month', 'Basic AI Models'], color: 'from-blue-500/20 to-purple-500/20' },
-                { title: 'Professional', price: '$49/month', features: ['8 Tools Access', 'Priority Support', 'Unlimited API Calls', 'Advanced AI Models'], color: 'from-orange/20 to-amber-500/20' },
-                { title: 'Enterprise', price: '$149/month', features: ['Unlimited Tools', 'Custom AI Models', '24/7 Support', 'Dedicated Infrastructure'], color: 'from-emerald-500/20 to-cyan-500/20' },
+                { title: 'Professional', price: '₹49/month', features: ['8 Tools Access', 'Priority Support', 'Unlimited API Calls', 'Advanced AI Models'], color: 'from-orange/20 to-amber-500/20' },
+                { title: 'Enterprise', price: '₹149/month', features: ['Unlimited Tools', 'Custom AI Models', '24/7 Support', 'Dedicated Infrastructure'], color: 'from-emerald-500/20 to-cyan-500/20' },
               ].map((plan, i) => (
                 <div key={i} className={`bg-gradient-to-b ${plan.color} p-6 rounded-xl border border-white/10 space-y-4`}>
                   <h4 className="font-loos-wide text-xl">{plan.title}</h4>
