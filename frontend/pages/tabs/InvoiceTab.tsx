@@ -16,6 +16,17 @@ const InvoiceTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+const formatCurrency = (amount: string) => {
+  const numericAmount = Number(
+    amount.replace(/[^0-9.-]+/g, '')
+  );
+
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+  }).format(numericAmount);
+};
+  
   useEffect(() => {
     const fetchInvoices = async () => {
       if (!user?.token) {
@@ -104,7 +115,7 @@ const InvoiceTab: React.FC = () => {
               >
                 <span className="font-aeroport">{invoice.date}</span>
                 <span className="font-aeroport">{invoice.desc}</span>
-                <span className="font-loos-wide text-orange">{invoice.amount}</span>
+                <span className="font-loos-wide text-orange">{formatCurrency(invoice.amount)}</span>
                 <span className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${invoice.status === 'Paid' ? 'bg-green-400' : 'bg-red-400'}`} />
                   {invoice.status}
