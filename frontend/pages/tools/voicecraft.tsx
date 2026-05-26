@@ -130,35 +130,127 @@ const VoiceCraft = () => {
   };
 
   // Handler to reapply voice settings on the original audio file.
-  const handleApplySettings = async () => {
-    if (audioFile) {
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      formData.append('pitch', pitch.toString());
-      formData.append('speed', speed.toString());
-      formData.append('voiceModel', selectedVoice);
-      setIsProcessing(true);
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/voicecraft`, {
-          method: 'POST',
-          body: formData,
-        });
-        if (response.ok) {
-          const blob = await response.blob();
-          const processedUrl = URL.createObjectURL(blob);
-          setProcessedAudio(processedUrl);
-          const audio = new Audio(processedUrl);
-          audioRef.current = audio;
-          audio.onended = () => setIsPlaying(false);
-        } else {
-          console.error('Error processing audio');
-        }
-      } catch (error) {
-        console.error('Error:', error);
+const handleApplySettings = async () => {
+
+  if (!audioFile) {
+    alert('Please upload audio first');
+    return;
+  }
+
+  setIsProcessing(true);
+
+  try {
+
+    const formData = new FormData();
+
+    formData.append(
+      'audio',
+      audioFile
+    );
+
+    formData.append(
+      'pitch',
+      String(pitch)
+    );
+
+    formData.append(
+      'speed',
+      String(speed)
+    );
+
+    formData.append(
+      'voiceModel',
+      selectedVoice
+    );
+
+    console.log(
+      'Applying settings:',
+      {
+        selectedVoice,
+        pitch,
+        speed
       }
-      setIsProcessing(false);
+    );
+
+    const response =
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/tools/voicecraft`,
+        {
+          method:'POST',
+          body:formData
+        }
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        'Voice processing failed'
+      );
+
     }
-  };
+
+    const blob =
+      await response.blob();
+
+    if (processedAudio) {
+      URL.revokeObjectURL(
+        processedAudio
+      );
+    }
+
+    const processedUrl =
+      URL.createObjectURL(
+        blob
+      );
+
+    setProcessedAudio(
+      processedUrl
+    );
+
+    if (
+      audioRef.current
+    ) {
+
+      audioRef.current.pause();
+
+    }
+
+    const newAudio =
+      new Audio(
+        processedUrl
+      );
+
+    newAudio.onended =
+      ()=>setIsPlaying(false);
+
+    audioRef.current =
+      newAudio;
+
+    setCurrentTime(0);
+    setDuration(0);
+    setIsPlaying(false);
+
+  }
+
+  catch(error){
+
+    console.error(
+      error
+    );
+
+    alert(
+      'Failed to apply settings'
+    );
+
+  }
+
+  finally{
+
+    setIsProcessing(false);
+
+  }
+
+};
 
   return (
     <div className="min-h-screen bg-custom-black">

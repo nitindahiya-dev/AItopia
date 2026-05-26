@@ -50,48 +50,226 @@ router.post('/removebg', upload.single('image'), async (req, res): Promise<void>
 });
 
 // ----- Voicecraft Endpoint -----
-router.post('/voicecraft', upload.single('audio'), async (req, res): Promise<void> => {
-  if (!req.file) {
-    res.status(400).json({ error: 'No audio file uploaded' });
-    return;
-  }
-  const pitchVal = req.body.pitch ? parseFloat(req.body.pitch) : 50;
-  const speedVal = req.body.speed ? parseFloat(req.body.speed) : 50;
-  const voiceModel = req.body.voiceModel || 'default';
-  let pitchMultiplier = pitchVal / 50;
-  let speedMultiplier = speedVal / 50;
-  let netMultiplier = pitchMultiplier * speedMultiplier;
-  switch (voiceModel) {
-    case 'cartoon':
-      netMultiplier *= 1.2;
-      break;
-    case 'celebrity':
-      netMultiplier *= 0.9;
-      break;
-    default:
-      break;
-  }
-  const filter = `[0:a]asetrate=44100*${netMultiplier},aresample=44100,atempo=${(1 / netMultiplier).toFixed(2)}[a]`;
-  const inputFilePath = req.file.path;
-  const outputFilePath = path.join('uploads', `processed-${req.file.filename}.mp3`);
-  const ffmpeg = require('fluent-ffmpeg');
-  ffmpeg(inputFilePath)
-    .outputOptions('-map', '[a]')
-    .complexFilter([filter])
-    .toFormat('mp3')
-    .on('end', () => {
-      fs.unlinkSync(inputFilePath);
-      res.set('Content-Type', 'audio/mpeg');
-      res.sendFile(path.resolve(outputFilePath), (err: Error) => {
-        if (!err) fs.unlinkSync(outputFilePath);
-      });
-    })
-    .on('error', (err: Error) => {
-      console.error('Error processing audio:', err);
-      fs.unlinkSync(inputFilePath);
-      res.status(500).json({ error: 'Audio processing failed' });
-    })
-    .save(outputFilePath);
+
+router.post(
+'/voicecraft',
+
+upload.single('audio'),
+
+async (req,res):Promise<void>=>{
+
+if(!req.file){
+
+res.status(400).json({
+error:'No audio uploaded'
+});
+
+return;
+
+}
+
+try{
+
+const pitchVal =
+Number(req.body.pitch ?? 50);
+
+const speedVal =
+Number(req.body.speed ?? 50);
+
+const voiceModel =
+req.body.voiceModel || 'default';
+
+const inputFilePath =
+req.file.path;
+
+const outputFilePath =
+path.join(
+'uploads',
+`processed-${Date.now()}.mp3`
+);
+
+const ffmpeg =
+require('fluent-ffmpeg');
+
+
+
+/* ---------- STRONGER SLIDER EFFECTS ---------- */
+
+let pitchMultiplier =
+0.5 + (pitchVal / 100) * 1.5;
+
+let speedMultiplier =
+0.5 + (speedVal / 100) * 1.5;
+
+
+
+/* ---------- VOICE PRESETS ---------- */
+
+switch(voiceModel){
+
+case 'professional':
+
+pitchMultiplier *= 0.9;
+speedMultiplier *= 0.95;
+
+break;
+
+
+
+case 'cartoon':
+
+pitchMultiplier *= 1.45;
+speedMultiplier *= 1.20;
+
+break;
+
+
+
+case 'celebrity':
+
+pitchMultiplier *= 0.75;
+speedMultiplier *= 0.85;
+
+break;
+
+
+
+default:
+
+break;
+
+}
+
+
+
+/* ---------- SAFE LIMITS ---------- */
+
+pitchMultiplier =
+Math.max(
+0.5,
+Math.min(
+pitchMultiplier,
+2.0
+)
+);
+
+speedMultiplier =
+Math.max(
+0.5,
+Math.min(
+speedMultiplier,
+2.0
+)
+);
+
+
+
+console.log({
+
+voiceModel,
+
+pitchMultiplier,
+
+speedMultiplier
+
+});
+
+
+
+const filter =
+
+`asetrate=44100*${pitchMultiplier},
+aresample=44100,
+atempo=${speedMultiplier}`;
+
+
+
+ffmpeg(inputFilePath)
+
+.audioFilters(filter)
+
+.audioCodec('libmp3lame')
+
+.format('mp3')
+
+.on('end',()=>{
+
+console.log(
+'Voice processing done.'
+);
+
+fs.unlinkSync(
+inputFilePath
+);
+
+res.sendFile(
+
+path.resolve(
+outputFilePath
+),
+
+(err:Error)=>{
+
+if(!err &&
+fs.existsSync(
+outputFilePath
+)){
+
+fs.unlinkSync(
+outputFilePath
+);
+
+}
+
+}
+
+);
+
+})
+
+.on('error',(err:Error)=>{
+
+console.error(
+'FFmpeg error:',
+err
+);
+
+if(
+fs.existsSync(
+inputFilePath
+)
+){
+fs.unlinkSync(
+inputFilePath
+);
+}
+
+res.status(500).json({
+error:
+'Audio processing failed'
+});
+
+})
+
+.save(
+outputFilePath
+);
+
+}
+
+catch(error){
+
+console.error(
+error
+);
+
+res.status(500).json({
+error:
+'Voicecraft failed'
+});
+
+}
+
 });
 
 // ----- Upload & Audio Extraction Endpoint -----
